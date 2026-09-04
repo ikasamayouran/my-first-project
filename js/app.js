@@ -12,4 +12,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   Tabelog.init();
+  Keiba.init();
 });

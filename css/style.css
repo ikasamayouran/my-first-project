@@ -246,3 +246,161 @@ label {
   .form-grid { grid-template-columns: 1fr; }
   .entry-card img { width: 56px; height: 56px; }
 }
+
+/* 競馬予想 */
+.keiba-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.stat-tile .stat-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.stat-tile .stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.stat-tile .stat-value.profit-pos { color: #2a8f4b; }
+.stat-tile .stat-value.profit-neg { color: #c0392b; }
+
+.horse-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.horse-row {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 32px 10px 10px;
+  background: var(--bg);
+}
+
+.horse-row-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.horse-row-grid label {
+  font-size: 0.7rem;
+  margin-bottom: 2px;
+}
+
+.horse-row-grid input,
+.horse-row-grid select {
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.remove-horse-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.remove-horse-btn:hover { color: var(--accent); }
+
+.small-btn {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.race-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.race-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.race-title { font-weight: 600; font-size: 1.05rem; }
+
+.race-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 2px 0 8px;
+}
+
+.race-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.badge.hit { color: #2a8f4b; border-color: #2a8f4b; }
+.badge.profit-pos { color: #2a8f4b; border-color: #2a8f4b; }
+.badge.profit-neg { color: #c0392b; border-color: #c0392b; }
+
+.horse-table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+table.horse-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+table.horse-table th,
+table.horse-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+table.horse-table td.winner { color: #2a8f4b; font-weight: 700; }
+
+.race-memo {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  white-space: pre-wrap;
+}
+
+.race-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+@media (max-width: 480px) {
+  .horse-row-grid { grid-template-columns: 1fr 1fr; }
+}
