@@ -147,6 +147,20 @@
 
         <div class="form-row">
           <label>出走馬</label>
+          <div class="import-toolbar">
+            <button type="button" id="keibaImportBtn" class="ghost-btn small-btn">📥 CSV/TSVから読み込む</button>
+            <input type="file" id="keibaImportFile" accept=".csv,.tsv,.txt" class="hidden">
+          </div>
+
+          <div id="keibaImportMapWrap" class="import-map-card hidden">
+            <p class="import-hint">JRA-VANのエクスポートCSVやnetkeibaのダウンロードデータなど、列の並びはファイルによって異なります。下で列の対応を確認してください（自動推測されています）。使わない列は「使用しない」のままでOK。</p>
+            <div id="keibaImportMapTable" class="import-map-table"></div>
+            <div class="form-actions">
+              <button type="button" id="keibaImportApplyBtn" class="primary-btn small-btn">この内容で読み込む</button>
+              <button type="button" id="keibaImportCancelBtn" class="ghost-btn small-btn">キャンセル</button>
+            </div>
+          </div>
+
           <div id="keibaHorseRows" class="horse-rows"></div>
           <button type="button" id="keibaAddHorseBtn" class="ghost-btn small-btn">＋ 馬を追加</button>
         </div>

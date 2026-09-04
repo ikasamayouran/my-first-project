@@ -26,6 +26,12 @@ const Keiba = (() => {
     els.list = document.getElementById("keibaList");
     els.empty = document.getElementById("keibaEmpty");
     els.stats = document.getElementById("keibaStats");
+    els.importBtn = document.getElementById("keibaImportBtn");
+    els.importFile = document.getElementById("keibaImportFile");
+    els.importMapWrap = document.getElementById("keibaImportMapWrap");
+    els.importMapTable = document.getElementById("keibaImportMapTable");
+    els.importApplyBtn = document.getElementById("keibaImportApplyBtn");
+    els.importCancelBtn = document.getElementById("keibaImportCancelBtn");
   }
 
   function persist() {
@@ -90,6 +96,223 @@ const Keiba = (() => {
       .filter((h) => h.name);
   }
 
+  // --- CSV/TSVインポート ---
+  // JRA-VANのエクスポートCSVやnetkeibaのダウンロードデータなど、列の並びは
+  // ファイルによって異なるため、ヘッダー名から候補を自動推測しつつ
+  // ユーザーに列の対応を確認してもらう方式にする。
+  const IMPORT_FIELDS = [
+    { key: "", label: "使用しない" },
+    { key: "raceName", label: "レース名" },
+    { key: "date", label: "開催日" },
+    { key: "track", label: "競馬場" },
+    { key: "distance", label: "距離・馬場状態" },
+    { key: "number", label: "馬番" },
+    { key: "name", label: "馬名" },
+    { key: "jockey", label: "騎手" },
+    { key: "popularity", label: "人気" },
+    { key: "odds", label: "オッズ" },
+    { key: "lastFinish", label: "前走着順" },
+    { key: "finish", label: "着順(結果)" },
+  ];
+
+  const GUESS_KEYWORDS = {
+    raceName: ["レース名", "競走名"],
+    date: ["開催日", "年月日", "日付", "date"],
+    track: ["競馬場", "場名", "開催場所"],
+    distance: ["距離", "馬場状態", "コース"],
+    number: ["馬番", "馬no", "horseno"],
+    name: ["馬名", "horsename"],
+    jockey: ["騎手", "jockey"],
+    popularity: ["人気"],
+    odds: ["オッズ", "odds"],
+    lastFinish: ["前走着順", "前走"],
+    finish: ["着順", "確定着順", "result"],
+  };
+
+  let importHeaders = [];
+  let importRows = [];
+  let importMapping = [];
+
+  function guessField(header) {
+    const h = (header || "").toLowerCase().trim();
+    for (const [key, keywords] of Object.entries(GUESS_KEYWORDS)) {
+      if (keywords.some((kw) => h.includes(kw.toLowerCase()))) return key;
+    }
+    return "";
+  }
+
+  // JRA-VAN由来のCSVはShift-JIS、netkeibaのダウンロードはUTF-8であることが多いため、
+  // UTF-8として不正なバイト列ならShift-JISとして読み直す。
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const buf = reader.result;
+        try {
+          resolve(new TextDecoder("utf-8", { fatal: true }).decode(buf));
+        } catch (e) {
+          try {
+            resolve(new TextDecoder("shift_jis").decode(buf));
+          } catch (e2) {
+            resolve(new TextDecoder("utf-8").decode(buf));
+          }
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function parseDelimited(text) {
+    const firstLine = text.split(/\r?\n/)[0] || "";
+    const delimiter = firstLine.split("\t").length > firstLine.split(",").length ? "\t" : ",";
+    const rows = [];
+    let row = [];
+    let field = "";
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') {
+            field += '"';
+            i++;
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          field += c;
+        }
+      } else if (c === '"') {
+        inQuotes = true;
+      } else if (c === delimiter) {
+        row.push(field);
+        field = "";
+      } else if (c === "\n") {
+        row.push(field);
+        rows.push(row);
+        row = [];
+        field = "";
+      } else if (c === "\r") {
+        // skip
+      } else {
+        field += c;
+      }
+    }
+    if (field.length || row.length) {
+      row.push(field);
+      rows.push(row);
+    }
+    return rows.filter((r) => r.some((f) => f.trim() !== ""));
+  }
+
+  function toNumber(str) {
+    if (str == null) return undefined;
+    const cleaned = String(str).replace(/[^\d.\-]/g, "");
+    const n = Number(cleaned);
+    return cleaned !== "" && Number.isFinite(n) ? n : undefined;
+  }
+
+  function normalizeDate(str) {
+    if (!str) return "";
+    const s = String(str).trim();
+    let m = s.match(/^(\d{4})[\/\-年](\d{1,2})[\/\-月](\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+    m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    return "";
+  }
+
+  function renderImportMap() {
+    els.importMapTable.innerHTML = importHeaders
+      .map(
+        (h, i) => `
+      <div class="import-map-row">
+        <div class="import-col-name" title="${escapeHtml(h)}">${escapeHtml(h)}</div>
+        <select class="import-col-select" data-idx="${i}">
+          ${IMPORT_FIELDS.map(
+            (f) => `<option value="${f.key}" ${importMapping[i] === f.key ? "selected" : ""}>${f.label}</option>`
+          ).join("")}
+        </select>
+      </div>`
+      )
+      .join("");
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const text = await readFileAsText(file);
+    const rows = parseDelimited(text);
+    if (rows.length < 2) {
+      alert("データ行が見つかりませんでした。ヘッダー行と1件以上のデータ行が必要です。");
+      return;
+    }
+    importHeaders = rows[0];
+    importRows = rows.slice(1);
+    importMapping = importHeaders.map(guessField);
+    renderImportMap();
+    els.importMapWrap.classList.remove("hidden");
+  }
+
+  function handleImportMapChange(e) {
+    const select = e.target.closest(".import-col-select");
+    if (!select) return;
+    importMapping[Number(select.dataset.idx)] = select.value;
+  }
+
+  function applyImport() {
+    const colIdx = {};
+    importMapping.forEach((key, i) => {
+      if (key) colIdx[key] = i;
+    });
+
+    if (colIdx.name === undefined) {
+      alert("「馬名」の列を割り当ててください。");
+      return;
+    }
+
+    const first = importRows[0];
+    if (colIdx.raceName !== undefined && !els.name.value.trim()) {
+      els.name.value = (first[colIdx.raceName] || "").trim();
+    }
+    if (colIdx.date !== undefined && !els.date.value) {
+      els.date.value = normalizeDate(first[colIdx.date]);
+    }
+    if (colIdx.track !== undefined && !els.track.value.trim()) {
+      els.track.value = (first[colIdx.track] || "").trim();
+    }
+    if (colIdx.distance !== undefined && !els.distance.value.trim()) {
+      els.distance.value = (first[colIdx.distance] || "").trim();
+    }
+
+    els.horseRows.innerHTML = "";
+    importRows.forEach((r) => {
+      const name = (r[colIdx.name] || "").trim();
+      if (!name) return;
+      addHorseRow({
+        number: colIdx.number !== undefined ? toNumber(r[colIdx.number]) : undefined,
+        name,
+        jockey: colIdx.jockey !== undefined ? (r[colIdx.jockey] || "").trim() : "",
+        popularity: colIdx.popularity !== undefined ? toNumber(r[colIdx.popularity]) : undefined,
+        odds: colIdx.odds !== undefined ? toNumber(r[colIdx.odds]) : undefined,
+        lastFinish: colIdx.lastFinish !== undefined ? toNumber(r[colIdx.lastFinish]) : undefined,
+        finish: colIdx.finish !== undefined ? toNumber(r[colIdx.finish]) : undefined,
+      });
+    });
+    if (!els.horseRows.children.length) addHorseRow();
+
+    closeImportMap();
+  }
+
+  function closeImportMap() {
+    els.importMapWrap.classList.add("hidden");
+    importHeaders = [];
+    importRows = [];
+    importMapping = [];
+  }
+
   function openForm(race) {
     els.formWrap.classList.remove("hidden");
     els.horseRows.innerHTML = "";
@@ -116,6 +339,7 @@ const Keiba = (() => {
     els.form.reset();
     els.id.value = "";
     els.horseRows.innerHTML = "";
+    closeImportMap();
   }
 
   function handleSubmit(e) {
@@ -319,6 +543,12 @@ const Keiba = (() => {
     els.list.addEventListener("click", handleListClick);
     els.search.addEventListener("input", render);
     els.sort.addEventListener("change", render);
+
+    els.importBtn.addEventListener("click", () => els.importFile.click());
+    els.importFile.addEventListener("change", handleImportFile);
+    els.importMapTable.addEventListener("change", handleImportMapChange);
+    els.importApplyBtn.addEventListener("click", applyImport);
+    els.importCancelBtn.addEventListener("click", closeImportMap);
   }
 
   return { init };
