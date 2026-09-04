@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自分専用アプリ</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>自分専用アプリ</h1>
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="tabelog">🍜 食べログ</button>
+    <button class="tab-btn" data-tab="travel">🗺️ 旅行ルート</button>
+    <button class="tab-btn" data-tab="keiba">🏇 競馬予想</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 食べログ -->
+  <section id="tab-tabelog" class="tab-panel active">
+    <div class="panel-toolbar">
+      <input type="text" id="tabelogSearch" placeholder="店名・エリアで検索">
+      <select id="tabelogGenreFilter">
+        <option value="">ジャンル: すべて</option>
+      </select>
+      <select id="tabelogSort">
+        <option value="date_desc">訪問日が新しい順</option>
+        <option value="date_asc">訪問日が古い順</option>
+        <option value="rating_desc">評価が高い順</option>
+        <option value="rating_asc">評価が低い順</option>
+      </select>
+      <button id="tabelogAddBtn" class="primary-btn">＋ 新規追加</button>
+    </div>
+
+    <div id="tabelogFormWrap" class="form-card hidden">
+      <form id="tabelogForm">
+        <input type="hidden" id="tabelogId">
+        <div class="form-row">
+          <label>店名 <span class="req">必須</span></label>
+          <input type="text" id="tabelogName" required>
+        </div>
+        <div class="form-row form-grid">
+          <div>
+            <label>ジャンル</label>
+            <input type="text" id="tabelogGenre" list="genreList" placeholder="例: ラーメン">
+            <datalist id="genreList"></datalist>
+          </div>
+          <div>
+            <label>エリア</label>
+            <input type="text" id="tabelogArea" placeholder="例: 渋谷">
+          </div>
+        </div>
+        <div class="form-row form-grid">
+          <div>
+            <label>評価</label>
+            <div class="star-input" id="tabelogRatingInput" data-value="0">
+              <span data-star="1">★</span><span data-star="2">★</span><span data-star="3">★</span><span data-star="4">★</span><span data-star="5">★</span>
+            </div>
+          </div>
+          <div>
+            <label>価格帯</label>
+            <select id="tabelogPrice">
+              <option value="">未設定</option>
+              <option value="~1000円">〜1,000円</option>
+              <option value="1000-3000円">1,000〜3,000円</option>
+              <option value="3000-5000円">3,000〜5,000円</option>
+              <option value="5000-10000円">5,000〜10,000円</option>
+              <option value="10000円~">10,000円〜</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row form-grid">
+          <div>
+            <label>訪問日</label>
+            <input type="date" id="tabelogDate">
+          </div>
+          <div>
+            <label>写真URL(任意)</label>
+            <input type="url" id="tabelogPhoto" placeholder="https://...">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>メモ</label>
+          <textarea id="tabelogMemo" rows="3" placeholder="料理の感想、また行きたいか、など"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="primary-btn">保存</button>
+          <button type="button" id="tabelogCancelBtn" class="ghost-btn">キャンセル</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="tabelogList" class="card-list"></div>
+    <p id="tabelogEmpty" class="empty-state hidden">まだお店が登録されていません。「＋ 新規追加」から追加してみましょう。</p>
+  </section>
+
+  <!-- 旅行ルート -->
+  <section id="tab-travel" class="tab-panel">
+    <div class="coming-soon">
+      <h2>🗺️ 旅行ルート作成</h2>
+      <p>近日公開予定の機能です。</p>
+      <ul>
+        <li>訪問地をリストアップしてルートを作成</li>
+        <li>日程ごとのスケジュール管理</li>
+        <li>地図上でのルート確認</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 競馬予想 -->
+  <section id="tab-keiba" class="tab-panel">
+    <div class="coming-soon">
+      <h2>🏇 競馬予想</h2>
+      <p>近日公開予定の機能です。データ分析による予想支援を予定しています。</p>
+      <ul>
+        <li>過去のレースデータ・条件の入力</li>
+        <li>簡易スコアリングによる予想支援</li>
+        <li>予想と結果・収支の記録</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script src="js/storage.js"></script>
+<script src="js/tabelog.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
