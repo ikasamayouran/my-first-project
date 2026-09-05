@@ -148,8 +148,18 @@
         <div class="form-row">
           <label>出走馬</label>
           <div class="import-toolbar">
-            <button type="button" id="keibaImportBtn" class="ghost-btn small-btn">📥 CSV/TSVから読み込む</button>
+            <button type="button" id="keibaImportBtn" class="ghost-btn small-btn">📥 CSV/TSVファイルを読み込む</button>
             <input type="file" id="keibaImportFile" accept=".csv,.tsv,.txt" class="hidden">
+            <button type="button" id="keibaPasteImportBtn" class="ghost-btn small-btn">📋 貼り付けて読み込む</button>
+          </div>
+
+          <div id="keibaPasteWrap" class="import-map-card hidden">
+            <p class="import-hint">出馬表アプリなどでコピーした表をそのまま貼り付けてください（1行目は項目名として扱われます）。</p>
+            <textarea id="keibaPasteArea" rows="6" placeholder="レース名&#9;開催日&#9;馬番&#9;馬名&#9;性齢&#9;騎手&#9;人気&#9;オッズ&#9;前走着順&#9;父小系統"></textarea>
+            <div class="form-actions">
+              <button type="button" id="keibaPasteApplyBtn" class="primary-btn small-btn">解析する</button>
+              <button type="button" id="keibaPasteCancelBtn" class="ghost-btn small-btn">キャンセル</button>
+            </div>
           </div>
 
           <div id="keibaImportMapWrap" class="import-map-card hidden">

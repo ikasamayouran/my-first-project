@@ -32,6 +32,11 @@ const Keiba = (() => {
     els.importMapTable = document.getElementById("keibaImportMapTable");
     els.importApplyBtn = document.getElementById("keibaImportApplyBtn");
     els.importCancelBtn = document.getElementById("keibaImportCancelBtn");
+    els.pasteImportBtn = document.getElementById("keibaPasteImportBtn");
+    els.pasteWrap = document.getElementById("keibaPasteWrap");
+    els.pasteArea = document.getElementById("keibaPasteArea");
+    els.pasteApplyBtn = document.getElementById("keibaPasteApplyBtn");
+    els.pasteCancelBtn = document.getElementById("keibaPasteCancelBtn");
   }
 
   function persist() {
@@ -251,21 +256,35 @@ const Keiba = (() => {
       .join("");
   }
 
-  async function handleImportFile(e) {
-    const file = e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    const text = await readFileAsText(file);
+  function beginImportFromText(text) {
     const rows = parseDelimited(text);
     if (rows.length < 2) {
-      alert("データ行が見つかりませんでした。ヘッダー行と1件以上のデータ行が必要です。");
+      alert("データ行が見つかりませんでした。項目名の行と1件以上のデータ行が必要です。");
       return;
     }
     importHeaders = rows[0];
     importRows = rows.slice(1);
     importMapping = importHeaders.map(guessField);
     renderImportMap();
+    els.pasteWrap.classList.add("hidden");
     els.importMapWrap.classList.remove("hidden");
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const text = await readFileAsText(file);
+    beginImportFromText(text);
+  }
+
+  function handlePasteApply() {
+    const text = els.pasteArea.value;
+    if (!text.trim()) {
+      alert("貼り付けるデータがありません。");
+      return;
+    }
+    beginImportFromText(text);
   }
 
   function handleImportMapChange(e) {
@@ -328,6 +347,11 @@ const Keiba = (() => {
     importMapping = [];
   }
 
+  function closePasteWrap() {
+    els.pasteWrap.classList.add("hidden");
+    els.pasteArea.value = "";
+  }
+
   function openForm(race) {
     els.formWrap.classList.remove("hidden");
     els.horseRows.innerHTML = "";
@@ -355,6 +379,7 @@ const Keiba = (() => {
     els.id.value = "";
     els.horseRows.innerHTML = "";
     closeImportMap();
+    closePasteWrap();
   }
 
   function handleSubmit(e) {
@@ -567,6 +592,13 @@ const Keiba = (() => {
     els.importMapTable.addEventListener("change", handleImportMapChange);
     els.importApplyBtn.addEventListener("click", applyImport);
     els.importCancelBtn.addEventListener("click", closeImportMap);
+
+    els.pasteImportBtn.addEventListener("click", () => {
+      els.pasteWrap.classList.remove("hidden");
+      els.pasteArea.focus();
+    });
+    els.pasteApplyBtn.addEventListener("click", handlePasteApply);
+    els.pasteCancelBtn.addEventListener("click", closePasteWrap);
   }
 
   return { init };
