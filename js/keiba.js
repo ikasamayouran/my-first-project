@@ -66,10 +66,13 @@ const Keiba = (() => {
       <div class="horse-row-grid">
         <div><label>馬番</label><input type="number" min="1" class="h-number" value="${h.number ?? ""}"></div>
         <div><label>馬名</label><input type="text" class="h-name" value="${escapeHtml(h.name || "")}"></div>
+        <div><label>性齢</label><input type="text" class="h-sexage" value="${escapeHtml(h.sexAge || "")}" placeholder="例: 牝7"></div>
         <div><label>騎手</label><input type="text" class="h-jockey" value="${escapeHtml(h.jockey || "")}"></div>
         <div><label>人気</label><input type="number" min="1" class="h-popularity" value="${h.popularity ?? ""}"></div>
         <div><label>オッズ</label><input type="number" min="0" step="0.1" class="h-odds" value="${h.odds ?? ""}"></div>
         <div><label>前走着順</label><input type="number" min="1" class="h-lastfinish" value="${h.lastFinish ?? ""}"></div>
+        <div><label>体重(kg)</label><input type="number" min="0" class="h-weight" value="${h.weight ?? ""}"></div>
+        <div><label>父小系統</label><input type="text" class="h-sireline" value="${escapeHtml(h.sireLine || "")}" placeholder="例: サンデー系"></div>
         <div><label>自己評価</label><select class="h-rating">${ratingOptions(h.selfRating || 0)}</select></div>
         <div><label>着順(結果)</label><input type="number" min="1" class="h-finish" value="${h.finish ?? ""}"></div>
       </div>
@@ -86,10 +89,13 @@ const Keiba = (() => {
       .map((row) => ({
         number: Number(row.querySelector(".h-number").value) || undefined,
         name: row.querySelector(".h-name").value.trim(),
+        sexAge: row.querySelector(".h-sexage").value.trim(),
         jockey: row.querySelector(".h-jockey").value.trim(),
         popularity: Number(row.querySelector(".h-popularity").value) || undefined,
         odds: Number(row.querySelector(".h-odds").value) || undefined,
         lastFinish: Number(row.querySelector(".h-lastfinish").value) || undefined,
+        weight: Number(row.querySelector(".h-weight").value) || undefined,
+        sireLine: row.querySelector(".h-sireline").value.trim(),
         selfRating: Number(row.querySelector(".h-rating").value) || 0,
         finish: Number(row.querySelector(".h-finish").value) || undefined,
       }))
@@ -108,10 +114,13 @@ const Keiba = (() => {
     { key: "distance", label: "距離・馬場状態" },
     { key: "number", label: "馬番" },
     { key: "name", label: "馬名" },
+    { key: "sexAge", label: "性齢" },
     { key: "jockey", label: "騎手" },
     { key: "popularity", label: "人気" },
     { key: "odds", label: "オッズ" },
     { key: "lastFinish", label: "前走着順" },
+    { key: "weight", label: "体重" },
+    { key: "sireLine", label: "父小系統" },
     { key: "finish", label: "着順(結果)" },
   ];
 
@@ -122,10 +131,13 @@ const Keiba = (() => {
     distance: ["距離", "馬場状態", "コース"],
     number: ["馬番", "馬no", "horseno"],
     name: ["馬名", "horsename"],
+    sexAge: ["性齢", "性別・年齢", "性年齢"],
     jockey: ["騎手", "jockey"],
-    popularity: ["人気"],
-    odds: ["オッズ", "odds"],
+    popularity: ["人気", "推定人気", "推人"],
+    odds: ["オッズ", "単勝", "odds"],
     lastFinish: ["前走着順", "前走"],
+    weight: ["体重", "馬体重", "weight"],
+    sireLine: ["父小系統", "父系統", "小系統", "血統"],
     finish: ["着順", "確定着順", "result"],
   };
 
@@ -294,10 +306,13 @@ const Keiba = (() => {
       addHorseRow({
         number: colIdx.number !== undefined ? toNumber(r[colIdx.number]) : undefined,
         name,
+        sexAge: colIdx.sexAge !== undefined ? (r[colIdx.sexAge] || "").trim() : "",
         jockey: colIdx.jockey !== undefined ? (r[colIdx.jockey] || "").trim() : "",
         popularity: colIdx.popularity !== undefined ? toNumber(r[colIdx.popularity]) : undefined,
         odds: colIdx.odds !== undefined ? toNumber(r[colIdx.odds]) : undefined,
         lastFinish: colIdx.lastFinish !== undefined ? toNumber(r[colIdx.lastFinish]) : undefined,
+        weight: colIdx.weight !== undefined ? toNumber(r[colIdx.weight]) : undefined,
+        sireLine: colIdx.sireLine !== undefined ? (r[colIdx.sireLine] || "").trim() : "",
         finish: colIdx.finish !== undefined ? toNumber(r[colIdx.finish]) : undefined,
       });
     });
@@ -471,9 +486,12 @@ const Keiba = (() => {
         <td>${i + 1}位</td>
         <td>${h.number ?? "-"}</td>
         <td>${escapeHtml(h.name)}</td>
+        <td>${escapeHtml(h.sexAge || "-")}</td>
         <td>${escapeHtml(h.jockey || "-")}</td>
         <td>${h.popularity ? `${h.popularity}人気` : "-"}</td>
         <td>${h.odds ?? "-"}</td>
+        <td>${h.weight ? `${h.weight}kg` : "-"}</td>
+        <td>${escapeHtml(h.sireLine || "-")}</td>
         <td>${RATING_LABELS[h.selfRating || 0]}</td>
         <td class="${h.finish === 1 ? "winner" : ""}">${h.finish ? `${h.finish}着` : "-"}</td>
       </tr>`
@@ -494,7 +512,7 @@ const Keiba = (() => {
           ? `<div class="horse-table-wrap">
         <table class="horse-table">
           <thead>
-            <tr><th>予想</th><th>馬番</th><th>馬名</th><th>騎手</th><th>人気</th><th>オッズ</th><th>評価</th><th>着順</th></tr>
+            <tr><th>予想</th><th>馬番</th><th>馬名</th><th>性齢</th><th>騎手</th><th>人気</th><th>オッズ</th><th>体重</th><th>父小系統</th><th>評価</th><th>着順</th></tr>
           </thead>
           <tbody>${tableRows}</tbody>
         </table>
